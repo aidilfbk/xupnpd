@@ -317,6 +317,9 @@ int mcast::mcast_grp::join(void) const
 
         int reuse=1;
         setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(reuse));
+#if defined(__FreeBSD__) || defined(__APPLE__)
+        setsockopt(sock,SOL_SOCKET,SO_REUSEPORT,&reuse,sizeof(reuse));
+#endif /* __FreeBSD__ */
 
         if(!bind(sock,(sockaddr*)&sin,sizeof(sin)))
         {
