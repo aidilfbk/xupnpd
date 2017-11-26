@@ -13,7 +13,7 @@ function hls_get_index(url,t)
 
     local seq=fseq
 
-    for d,u in string.gmatch(pls_data,'#EXTINF:(%d+%.?%d-),\r?\n(.-)\r?\n') do
+    for d,u in string.gmatch(pls_data,'#EXTINF:(%d+%.?%d-),.-\r?\n(.-)\r?\n') do
 
         if string.sub(u,1,7) ~= 'http://' then u=string.match(url,'(.+/).+$')..u end
 
