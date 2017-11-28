@@ -236,11 +236,14 @@ function youtube_sendurl(youtube_url,range)
   local url=nil
   if plugin_sendurl_from_cache(youtube_url,range) then return end
 
-  url=youtube_get_video_url(youtube_url)
+  url,isHLS=youtube_get_video_url(youtube_url)
   if url then
     if cfg.debug>0 then print('YouTube Real URL: '..url) end
-
-    plugin_sendurl(youtube_url,url,range)
+	if isHLS and plugins.hls then
+		plugins.hls.sendurl(url)
+	else 
+	    plugin_sendurl(youtube_url,url,range)
+	end
   else
     if cfg.debug>0 then print('YouTube clip is not found') end
 
@@ -460,8 +463,28 @@ function get_fmt( fmt_list )
     return fmt
 end
 
+function youtube_parse_hlsvp(playlist_url)
+	
+    local prefres = cfg.youtube_preferred_resolution
+    if prefres < 0 then
+        return nil
+    end
+	
+	local pls_data = plugin_download(playlist_url)
+	local res=0,url
+    for r,u in string.gmatch(pls_data,'#EXT%-X%-STREAM%-INF:.-RESOLUTION=%d+x(%d+).-[\r\n]+([%p%w]+)[\r\n]*') do
+    	r = tonumber(r)
+		if r >= res and res <= prefres then
+			res = r
+			url = u
+		end
+    end
+	return url
+end
+
 function youtube_get_video_url(youtube_url)
     local clip_page=plugin_download(youtube_url)
+	local isHLS = false
     if clip_page then
         local line=string.match(clip_page,'ytplayer.config%s*=%s*({.-});')
         clip_page=nil
@@ -496,14 +519,15 @@ function youtube_get_video_url(youtube_url)
                     local hlsvp = string.match( line, "\"hlsvp\": *\"(.-)\"" )
                     if hlsvp then
                         hlsvp = string.gsub( hlsvp, "\\/", "/" )
-                        path = hlsvp
+						isHLS = true
+						path = youtube_parse_hlsvp(hlsvp)
                     end
                 end
     else
         if cfg.debug>0 then print('YouTube clip is not found') end
         return nil
     end
-    return path;
+    return path, isHLS;
 end
 
 function youtube_old_get_video_url(youtube_url)
