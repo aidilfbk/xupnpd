@@ -9,7 +9,7 @@ function ffmpeg_sendurl(url,range)
 	if cfg.debug > 0 then
 		stderr_redirect = ""
 	else
-		stderr_redirect = "2>/dev/null"
+		stderr_redirect = "-nostats -hide_banner -loglevel -8 2>/dev/null"
 	end
 	
 	local cmd = string.format('ffmpeg -user_agent "%s" -multiple_requests 1 -i "%s" -c copy -copy_unknown -f mpegts -mpegts_copyts 1 pipe:1 %s', cfg.user_agent, url, stderr_redirect)
