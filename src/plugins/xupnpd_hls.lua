@@ -15,7 +15,7 @@ function hls_get_index(url,t)
 
     for d,u in string.gmatch(pls_data,'#EXTINF:(%d+%.?%d-),.-\r?\n(.-)\r?\n') do
 
-        if string.sub(u,1,7) ~= 'http://' then u=string.match(url,'(.+/).+$')..u end
+        if string.find(u,"^https?://") == nil then u=string.match(url,'(.+/).+$')..u end
 
         t[seq]={ duration=tonumber(d), ['url']=u, ['seq']=seq }
 
