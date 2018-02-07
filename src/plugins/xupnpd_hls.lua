@@ -8,6 +8,7 @@ function hls_get_index(url,t)
     if not pls_data then return nil end
 
     local fseq=tonumber(string.match(pls_data,"#EXT%-X%-MEDIA%-SEQUENCE:(%d+)\r?\n"))
+    t.target_duration = tonumber(string.match(pls_data, "#EXT%-X%-TARGETDURATION:(%d+)\r?\n"))
 
     if not fseq then return nil end
 
@@ -41,7 +42,31 @@ function hls_sendurl(url,range)
 
             if not fseq then break end
 
-            if not seq or fseq>seq then seq=fseq end
+            if not seq or fseq>seq then
+                --[[
+                Choose a segment to start which is no closer than
+                3 times the target duration from the end of the playlist.
+                see https://github.com/videolan/vlc/blob/ddba52206f69bb123bea8ed4d4ada07b3cb1223c/modules/stream_filter/httplive.c#L447
+                ]]
+                seq = idx_seq-1
+                local duration = 0
+                while seq >= 0 and seq < idx_seq do
+                    local segment = t[seq]
+                    if segment == nil then
+                        seq=fseq
+                        break
+                    end
+                    if segment.duration > t.target_duration and cfg.debug > 0 then
+                        print(string.format("EXTINF:%d duration is larger than EXT-X-TARGETDURATION:%d", segment.duration, t.target_duration))
+                    end
+                    duration = duration + segment.duration
+                    if duration >= (3*t.target_duration) then
+                        -- Start point found
+                        break
+                    end
+                    seq = seq-1
+                end
+            end
         end
 
         local chunk=t[seq]
