@@ -24,7 +24,6 @@ if reload_playlists ~= nil then
 		end
 	}
 	function dynamic_reload_playlists()
-		print("called")
 		native_reload_playlists()
 		after_reload_playlists()
 	end
@@ -34,10 +33,9 @@ if reload_playlists ~= nil then
 	if reload_playlists ~= dynamic_reload_playlists then
 		native_reload_playlists = reload_playlists
 		reload_playlists = dynamic_reload_playlists
-		print("monkeypatched")
-		
+		if cfg.debug>0 then print('Dynamic playlists module loaded') end
 		after_reload_playlists()
 	end
 else
-	print("Error on dynamic playlists. Could not patch reload_playlists() function, is the lua file in "..cfg.config_path.."postinit/ ?")
+	print("Error initialising dynamic playlists module. Could not patch reload_playlists() function, is the module file in "..cfg.config_path.."postinit/ ?")
 end
