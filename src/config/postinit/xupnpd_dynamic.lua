@@ -11,13 +11,15 @@ if reload_playlists ~= nil then
 			end
 			t.elements = retval
 			playlist_fix_sub_tree(t)
+			for i, element in ipairs(retval) do
+				element.plugin = t.plugin
+			end
 			t.elements = nil
 			return retval
 		end,
 		size = function(t, k)
 			return #t.elements
 		end,
-		plugin = "dynamic",
 		__index = function (t, k)
 			local retval = dynamic_elements[k]
 			if type(retval) == "function" then
@@ -31,12 +33,24 @@ if reload_playlists ~= nil then
 		after_reload_playlists()
 	end
 	function after_reload_playlists()
-		pls_folder=playlist_new_folder(playlist_data,'Dynamic')		
+		local pls_folder=playlist_new_folder(playlist_data,'Dynamic')
+		
+		for k,plugin in pairs(plugins) do
+			if plugin.disabled~=true and plugin.dynamic_playlist ~= nil then
+				playlist_attach(pls_folder, plugin.dynamic_playlist)
+			end
+		end
 	end
 	if reload_playlists ~= dynamic_reload_playlists then
 		native_reload_playlists = reload_playlists
 		reload_playlists = dynamic_reload_playlists
 		if cfg.debug>0 then print('Dynamic playlists module loaded') end
+		for plugin_name,plugin in pairs(plugins) do
+			if plugin.disabled~=true and plugin.dynamic_playlist ~= nil then
+				plugin.dynamic_playlist.plugin = plugin_name
+				setmetatable(plugin.dynamic_playlist, dynamic_elements)
+			end
+		end
 		after_reload_playlists()
 	end
 else
