@@ -9,6 +9,9 @@ if reload_playlists ~= nil then
 			if type(retval) ~= "table" then
 				return immutable_nil_table
 			end
+			t.elements = retval
+			playlist_fix_sub_tree(t)
+			t.elements = nil
 			return retval
 		end,
 		size = function(t, k)
